@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Roblox Image String Converter</title>
+    <style>
+        body { font-family: sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; background: #aae5a4; color: #fff; }
+        .box { background: #aae5a5; padding: 20px; border-radius: 8px; text-align: center; }
+        textarea { width: 300px; height: 100px; margin-top: 10px; display: block; }
+        button { margin-top: 10px; padding: 8px 16px; cursor: pointer; }
+    </style>
+</head>
+<body>
+
+<div class="box">
+    <h3>Upload Image for Roblox</h3>
+    <input type="file" id="imageInput" accept="image/*">
+    <textarea id="output" placeholder="Your Roblox string will appear here..." readonly></textarea>
+    <button id="copyBtn">Copy String</button>
+</div>
+
+<script>
+    const imageInput = document.getElementById('imageInput');
+    const output = document.getElementById('output');
+    const copyBtn = document.getElementById('copyBtn');
+
+    imageInput.addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = function(event) {
+            const img = new Image();
+            img.onload = function() {
+                // Create an off-screen canvas
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d');
+
+                // Enforce a strict max resolution so Roblox doesn't crash
+                const size = 64; 
+                canvas.width = size;
+                canvas.height = size;
+
+                // Draw and automatically downscale the image
+                ctx.drawImage(img, 0, 0, size, size);
+
+                // Grab the raw pixel array (RGBA)
+                const imgData = ctx.getImageData(0, 0, size, size).data;
+                let pixelStrings = [];
+
+                // Loop through every pixel (4 bytes per pixel: R, G, B, A)
+                for (let i = 0; i < imgData.length; i += 4) {
+                    const r = imgData[i];
+                    const g = imgData[i+1];
+                    const b = imgData[i+2];
+                    pixelStrings.push(`${r},${g},${b}`);
+                }
+
+                // Join all pixels with a semicolon
+                output.value = pixelStrings.join(';');
+            };
+            img.src = event.target.result;
+        };
+        reader.readAsDataURL(file);
+    });
+
+    copyBtn.addEventListener('click', () => {
+        output.select();
+        document.execCommand('copy');
+        alert('Copied to clipboard!');
+    });
+</script>
+
+</body>
+</html>
