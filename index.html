@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Roblox 64 - High-Res Image Converter</title>
+    <title>Roblox 64 - Image Converter</title>
     <style>
         body { 
             font-family: Arial, sans-serif; 
@@ -51,12 +51,12 @@
     </div>
 
     <div class="control-group">
-        <label for="imageInput">Upload Image:</label>
+        <label for="imageInput">upload image:</label>
         <input type="file" id="imageInput" accept="image/*">
     </div>
 
-    <div id="status" class="status-msg">Ready. Upload an image.</div>
-    <button id="copyBtn" disabled>Copy String</button>
+    <div id="status" class="status-msg">ready, upload an image</div>
+    <button id="copyBtn" disabled>copy code</button>
 </div>
 
 <script>
@@ -65,7 +65,6 @@
     const status = document.getElementById('status');
     const copyBtn = document.getElementById('copyBtn');
 
-    // Kept in background memory to avoid rendering UI text-layout lag
     let masterPixelString = ""; 
 
     function processImage() {
@@ -86,24 +85,21 @@
                 canvas.width = size;
                 canvas.height = size;
 
-                // Off-screen browser downscaling pass
                 ctx.drawImage(img, 0, 0, size, size);
 
                 const imgData = ctx.getImageData(0, 0, size, size).data;
                 let pixelStrings = [];
 
-                // Flat array accumulation to prevent memory thrashing
                 for (let i = 0; i < imgData.length; i += 4) {
-                    const r = imgData[i];
-                    const g = imgData[i+1];
-                    const b = imgData[i+2];
-                    pixelStrings.push(`${r},${g},${b}`);
+                    const r = imgData[i].toString(16).padStart(2, '0');
+                    const g = imgData[i+1].toString(16).padStart(2, '0');
+                    const b = imgData[i+2].toString(16).padStart(2, '0');
+                    pixelStrings.push(`${r}${g}${b}`);
                 }
 
-                // Compile everything with the size header prefix into memory
                 masterPixelString = `${size}|` + pixelStrings.join(';');
                 
-                status.innerText = `Success! Generated ${size}x${size} payload.`;
+                status.innerText = `Success! Generated ${size}x${size} hex string.`;
                 copyBtn.disabled = false;
             };
             img.src = event.target.result;
@@ -114,14 +110,13 @@
     imageInput.addEventListener('change', processImage);
     sizePicker.addEventListener('change', processImage);
 
-    // Uses the modern Clipboard API to bypass heavy UI text selection locks
     copyBtn.addEventListener('click', () => {
         if (!masterPixelString) return;
         
         navigator.clipboard.writeText(masterPixelString).then(() => {
-            alert('Massive pixel string successfully copied to clipboard!');
+            alert('string copied');
         }).catch(err => {
-            alert('Clipboard copy failed. Ensure site has clipboard permissions.');
+            alert('copy failed');
             console.error(err);
         });
     });
