@@ -46,7 +46,6 @@
             <option value="128">128 x 128 (medium res)</option>
             <option value="256">256 x 256 (high res)</option>
             <option value="512">512 x 512 (higher res, low performance)</option>
-            <option value="1024">1024 x 1024 (god help)</option>
         </select>
     </div>
 
@@ -68,7 +67,7 @@
     let masterPixelString = ""; 
 
     function processImage() {
-        const file = imageInput.files[0];
+        const file = imageInput.files;
         if (!file) return;
 
         status.innerText = "Processing pixel array...";
@@ -90,16 +89,17 @@
                 const imgData = ctx.getImageData(0, 0, size, size).data;
                 let pixelStrings = [];
 
+                // Reverted back to the original RGB comma format
                 for (let i = 0; i < imgData.length; i += 4) {
-                    const r = imgData[i].toString(16).padStart(2, '0');
-                    const g = imgData[i+1].toString(16).padStart(2, '0');
-                    const b = imgData[i+2].toString(16).padStart(2, '0');
-                    pixelStrings.push(`${r}${g}${b}`);
+                    const r = imgData[i];
+                    const g = imgData[i+1];
+                    const b = imgData[i+2];
+                    pixelStrings.push(`${r},${g},${b}`);
                 }
 
                 masterPixelString = `${size}|` + pixelStrings.join(';');
                 
-                status.innerText = `Success! Generated ${size}x${size} hex string.`;
+                status.innerText = `it worked, generated code.`;
                 copyBtn.disabled = false;
             };
             img.src = event.target.result;
