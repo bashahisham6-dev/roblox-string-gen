@@ -2,53 +2,89 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Roblox Image String Converter</title>
+    <title>Roblox 64 - Image String Converter</title>
     <style>
-        body { font-family: sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; background: #aae5a4; color: #fff; }
-        .box { background: #aae5a5; padding: 20px; border-radius: 8px; text-align: center; }
-        textarea { width: 300px; height: 100px; margin-top: 10px; display: block; }
-        button { margin-top: 10px; padding: 8px 16px; cursor: pointer; }
+        body { 
+            font-family: Arial, sans-serif; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            justify-content: center; 
+            height: 100vh; 
+            margin: 0;
+            background-color: #aae5a5; 
+            color: #222; 
+        }
+        .box { 
+            background: #ffffff; 
+            padding: 30px; 
+            border-radius: 12px; 
+            text-align: center; 
+            box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+            width: 340px;
+        }
+        h3 { margin-top: 0; color: #111; }
+        .control-group { margin: 15px 0; text-align: left; }
+        label { font-weight: bold; display: block; margin-bottom: 5px; font-size: 14px; }
+        select, input[type="file"] { width: 100%; padding: 8px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px; }
+        textarea { width: 100%; height: 100px; margin-top: 15px; box-sizing: border-box; resize: none; border: 1px solid #ccc; border-radius: 4px; padding: 8px; font-family: monospace; font-size: 11px; }
+        button { width: 100%; margin-top: 15px; padding: 12px; font-weight: bold; background-color: #222; color: #fff; border: none; border-radius: 6px; cursor: pointer; transition: background 0.2s; }
+        button:hover { background-color: #444; }
     </style>
 </head>
 <body>
 
 <div class="box">
-    <h3>Upload Image for Roblox</h3>
-    <input type="file" id="imageInput" accept="image/*">
-    <textarea id="output" placeholder="Your Roblox string will appear here..." readonly></textarea>
+    <h3>Roblox 64</h3>
+    
+    <div class="control-group">
+        <label for="sizePicker">Target Resolution:</label>
+        <select id="sizePicker">
+            <option value="32">32 x 32 (High Performance)</option>
+            <option value="64" selected>64 x 64 (Standard)</option>
+            <option value="128">128 x 128 (Heavy UI Grid)</option>
+            <option value="256">256 x 256 (EditableImage Profile)</option>
+        </select>
+    </div>
+
+    <div class="control-group">
+        <label for="imageInput">Upload Image:</label>
+        <input type="file" id="imageInput" accept="image/*">
+    </div>
+
+    <textarea id="output" placeholder="Your formatted string will appear here..." readonly></textarea>
     <button id="copyBtn">Copy String</button>
 </div>
 
 <script>
     const imageInput = document.getElementById('imageInput');
+    const sizePicker = document.getElementById('sizePicker');
     const output = document.getElementById('output');
     const copyBtn = document.getElementById('copyBtn');
 
-    imageInput.addEventListener('change', function(e) {
-        const file = e.target.files[0];
+    function processImage() {
+        const file = imageInput.files[0];
         if (!file) return;
 
         const reader = new FileReader();
         reader.onload = function(event) {
             const img = new Image();
             img.onload = function() {
-                // Create an off-screen canvas
                 const canvas = document.createElement('canvas');
                 const ctx = canvas.getContext('2d');
 
-                // Enforce a strict max resolution so Roblox doesn't crash
-                const size = 64; 
+                // Read target resolution from selector
+                const size = parseInt(sizePicker.value); 
                 canvas.width = size;
                 canvas.height = size;
 
-                // Draw and automatically downscale the image
+                // Browser downscaling pass
                 ctx.drawImage(img, 0, 0, size, size);
 
-                // Grab the raw pixel array (RGBA)
                 const imgData = ctx.getImageData(0, 0, size, size).data;
                 let pixelStrings = [];
 
-                // Loop through every pixel (4 bytes per pixel: R, G, B, A)
+                // Extract RGB segments
                 for (let i = 0; i < imgData.length; i += 4) {
                     const r = imgData[i];
                     const g = imgData[i+1];
@@ -56,18 +92,22 @@
                     pixelStrings.push(`${r},${g},${b}`);
                 }
 
-                // Join all pixels with a semicolon
-                output.value = pixelStrings.join(';');
+                // Header appends size data prefix so Roblox knows the bounds automatically
+                output.value = `${size}|` + pixelStrings.join(';');
             };
             img.src = event.target.result;
         };
         reader.readAsDataURL(file);
-    });
+    }
+
+    imageInput.addEventListener('change', processImage);
+    sizePicker.addEventListener('change', processImage);
 
     copyBtn.addEventListener('click', () => {
+        if (!output.value) return;
         output.select();
         document.execCommand('copy');
-        alert('Copied to clipboard!');
+        alert('String copied to clipboard!');
     });
 </script>
 
